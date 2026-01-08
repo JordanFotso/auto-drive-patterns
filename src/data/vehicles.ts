@@ -1,0 +1,211 @@
+import { Vehicle, VehicleOption } from '@/types/vehicle';
+
+export const vehicleOptions: VehicleOption[] = [
+  {
+    id: 'sport-seats',
+    name: 'Sièges Sportifs',
+    price: 2500,
+    category: 'Intérieur',
+    incompatibleWith: ['leather-seats', 'comfort-seats'],
+  },
+  {
+    id: 'leather-seats',
+    name: 'Sièges en Cuir',
+    price: 3500,
+    category: 'Intérieur',
+    incompatibleWith: ['sport-seats'],
+  },
+  {
+    id: 'comfort-seats',
+    name: 'Sièges Confort',
+    price: 1800,
+    category: 'Intérieur',
+    incompatibleWith: ['sport-seats'],
+  },
+  {
+    id: 'panoramic-roof',
+    name: 'Toit Panoramique',
+    price: 2200,
+    category: 'Extérieur',
+    incompatibleWith: [],
+  },
+  {
+    id: 'sport-exhaust',
+    name: 'Échappement Sport',
+    price: 1500,
+    category: 'Performance',
+    incompatibleWith: ['eco-mode'],
+  },
+  {
+    id: 'eco-mode',
+    name: 'Pack Éco',
+    price: 800,
+    category: 'Performance',
+    incompatibleWith: ['sport-exhaust', 'sport-suspension'],
+  },
+  {
+    id: 'sport-suspension',
+    name: 'Suspension Sport',
+    price: 1800,
+    category: 'Performance',
+    incompatibleWith: ['eco-mode', 'comfort-suspension'],
+  },
+  {
+    id: 'comfort-suspension',
+    name: 'Suspension Confort',
+    price: 1200,
+    category: 'Performance',
+    incompatibleWith: ['sport-suspension'],
+  },
+  {
+    id: 'premium-audio',
+    name: 'Audio Premium',
+    price: 2800,
+    category: 'Technologie',
+    incompatibleWith: [],
+  },
+  {
+    id: 'nav-system',
+    name: 'Navigation GPS',
+    price: 1500,
+    category: 'Technologie',
+    incompatibleWith: [],
+  },
+];
+
+export const vehicles: Vehicle[] = [
+  {
+    id: 'v1',
+    name: 'Élégance GT',
+    type: 'automobile',
+    brand: 'Aurora',
+    model: 'GT Coupé',
+    year: 2024,
+    basePrice: 85000,
+    description: 'Un coupé sportif alliant puissance et raffinement. Design aérodynamique et performances exceptionnelles.',
+    image: '/vehicles/elegance-gt.jpg',
+    specifications: {
+      engine: 'V8 4.0L Biturbo',
+      power: '520 ch',
+      acceleration: '0-100 km/h en 3.8s',
+      topSpeed: '310 km/h',
+    },
+    availableOptions: vehicleOptions.filter(o => 
+      ['sport-seats', 'leather-seats', 'panoramic-roof', 'sport-exhaust', 'sport-suspension', 'premium-audio'].includes(o.id)
+    ),
+    inStockSince: new Date('2024-01-15'),
+    isOnSale: false,
+  },
+  {
+    id: 'v2',
+    name: 'Voyager Luxe',
+    type: 'automobile',
+    brand: 'Aurora',
+    model: 'Berline',
+    year: 2024,
+    basePrice: 72000,
+    description: 'La berline de luxe par excellence. Confort absolu et technologie de pointe pour vos longs trajets.',
+    image: '/vehicles/voyager-luxe.jpg',
+    specifications: {
+      engine: 'V6 3.0L Hybrid',
+      power: '380 ch',
+      acceleration: '0-100 km/h en 5.2s',
+      topSpeed: '250 km/h',
+    },
+    availableOptions: vehicleOptions.filter(o => 
+      ['leather-seats', 'comfort-seats', 'panoramic-roof', 'eco-mode', 'comfort-suspension', 'premium-audio', 'nav-system'].includes(o.id)
+    ),
+    inStockSince: new Date('2023-08-20'),
+    isOnSale: true,
+    saleDiscount: 15,
+  },
+  {
+    id: 'v3',
+    name: 'Urban Rider',
+    type: 'scooter',
+    brand: 'Velocity',
+    model: 'City 300',
+    year: 2024,
+    basePrice: 8500,
+    description: 'Le scooter urbain par excellence. Maniable, économique et stylé pour vos déplacements quotidiens.',
+    image: '/vehicles/urban-rider.jpg',
+    specifications: {
+      engine: 'Monocylindre 300cc',
+      power: '28 ch',
+      acceleration: '0-100 km/h en 9.5s',
+      topSpeed: '130 km/h',
+    },
+    availableOptions: vehicleOptions.filter(o => 
+      ['comfort-seats', 'nav-system'].includes(o.id)
+    ),
+    inStockSince: new Date('2024-02-01'),
+    isOnSale: false,
+  },
+  {
+    id: 'v4',
+    name: 'Thunder X',
+    type: 'automobile',
+    brand: 'Apex',
+    model: 'SUV Sport',
+    year: 2024,
+    basePrice: 95000,
+    description: 'Le SUV qui défie les conventions. Puissance brute et polyvalence dans un design audacieux.',
+    image: '/vehicles/thunder-x.jpg',
+    specifications: {
+      engine: 'V8 5.0L',
+      power: '600 ch',
+      acceleration: '0-100 km/h en 4.2s',
+      topSpeed: '280 km/h',
+    },
+    availableOptions: vehicleOptions.filter(o => 
+      ['sport-seats', 'leather-seats', 'panoramic-roof', 'sport-exhaust', 'sport-suspension', 'premium-audio', 'nav-system'].includes(o.id)
+    ),
+    inStockSince: new Date('2024-03-10'),
+    isOnSale: false,
+  },
+  {
+    id: 'v5',
+    name: 'Electra Vision',
+    type: 'automobile',
+    brand: 'Aurora',
+    model: 'Electric',
+    year: 2025,
+    basePrice: 68000,
+    description: 'L\'avenir de la mobilité électrique. Autonomie exceptionnelle et recharge ultra-rapide.',
+    image: '/vehicles/electra-vision.jpg',
+    specifications: {
+      engine: 'Dual Motor Electric',
+      power: '450 ch',
+      acceleration: '0-100 km/h en 4.0s',
+      topSpeed: '220 km/h',
+    },
+    availableOptions: vehicleOptions.filter(o => 
+      ['leather-seats', 'comfort-seats', 'panoramic-roof', 'comfort-suspension', 'premium-audio', 'nav-system'].includes(o.id)
+    ),
+    inStockSince: new Date('2024-04-01'),
+    isOnSale: false,
+  },
+  {
+    id: 'v6',
+    name: 'Nomad Explorer',
+    type: 'scooter',
+    brand: 'Velocity',
+    model: 'Adventure 500',
+    year: 2024,
+    basePrice: 12500,
+    description: 'Le maxi-scooter aventurier. Parfait pour les escapades et les longues distances.',
+    image: '/vehicles/nomad-explorer.jpg',
+    specifications: {
+      engine: 'Bicylindre 500cc',
+      power: '45 ch',
+      acceleration: '0-100 km/h en 7.8s',
+      topSpeed: '160 km/h',
+    },
+    availableOptions: vehicleOptions.filter(o => 
+      ['comfort-seats', 'nav-system', 'premium-audio'].includes(o.id)
+    ),
+    inStockSince: new Date('2023-06-15'),
+    isOnSale: true,
+    saleDiscount: 20,
+  },
+];
