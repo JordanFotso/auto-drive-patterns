@@ -191,9 +191,11 @@ const Cart = () => {
                       </span>
                     </div>
 
-                    <Button variant="hero" size="lg" className="w-full">
-                      Procéder au paiement
-                    </Button>
+                    <Link to="/checkout">
+                      <Button variant="hero" size="lg" className="w-full">
+                        Procéder au paiement
+                      </Button>
+                    </Link>
 
                     <Link to="/catalogue">
                       <Button variant="ghost" className="w-full mt-3">
