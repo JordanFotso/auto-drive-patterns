@@ -1,73 +1,65 @@
-# Welcome to your Lovable project
+# VehiClub View - Frontend
 
-## Project info
+Ce projet est l'interface utilisateur (frontend) de l'application VehiClub. C'est une **Single Page Application (SPA)** développée avec React, TypeScript et Vite, conçue pour être à la fois moderne, réactive et agréable à utiliser.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Aperçu de l'Interface
 
-## How can I edit this code?
+Voici un aperçu de l'interface utilisateur cible.
 
-There are several ways of editing your application.
+### Page d'Accueil
+![Page d'Accueil](../../docs/images/accueil.png)
 
-**Use Lovable**
+### Catalogue
+![Page du Catalogue](../../docs/images/catalogue.png)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### Détail d'un Véhicule
+![Page de Détail d'un Véhicule](../../docs/images/detail_vehicule.png)
 
-Changes made via Lovable will be committed automatically to this repo.
+## Stack Technologique
 
-**Use your preferred IDE**
+- **Framework**: React 18 avec Vite
+- **Langage**: TypeScript
+- **UI Components**: [Shadcn/UI](https://ui.shadcn.com/) - Une collection de composants réutilisables.
+- **Styling**: Tailwind CSS
+- **Routing**: React Router
+- **State Management**: React Context & Hooks
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Structure du Projet
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Le code source est organisé dans le dossier `src/` avec la structure suivante :
 
-Follow these steps:
+- **`assets/`**: Contient les images, icônes et autres ressources statiques.
+- **`components/`**: Contient les composants React réutilisables (UI, Layout, etc.).
+- **`context/`**: Pour la gestion de l'état global (ex: `CartContext`).
+- **`data/`**: Contient des données statiques pour le développement initial.
+- **`hooks/`**: Contient les hooks React personnalisés.
+- **`lib/`**: Fonctions utilitaires (ex: `cn` pour fusionner les classes Tailwind).
+- **`pages/`**: Chaque fichier représente une page de l'application.
+- **`types/`**: Contient les définitions de types TypeScript.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Installation et Lancement
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Prérequis
 
-# Step 3: Install the necessary dependencies.
-npm i
+- Node.js et npm
+- L'API backend (`VehiClub-API`) doit être en cours d'exécution.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+### Étapes
 
-**Edit a file directly in GitHub**
+1.  **Installer les dépendances** :
+    Naviguez dans le répertoire `VehiClub-View` et exécutez :
+    ```bash
+    npm install
+    ```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+2.  **Lancer le serveur de développement** :
+    ```bash
+    npm run dev
+    ```
+    L'application sera alors accessible à l'adresse `http://localhost:3000`.
 
-**Use GitHub Codespaces**
+### Connexion à l'API Backend
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Le projet est configuré pour communiquer avec l'API backend qui tourne sur `http://localhost:8080`.
 
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Un proxy a été configuré dans `vite.config.ts`. Toutes les requêtes faites vers `/api` depuis le frontend seront automatiquement redirigées vers le backend, évitant ainsi les problèmes de CORS en environnement de développement.
