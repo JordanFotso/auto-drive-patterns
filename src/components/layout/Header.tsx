@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import UserMenu from './UserMenu';
 
 const Header = () => {
   const { items, canUndo, canRedo, undo, redo } = useCart();
@@ -16,7 +17,6 @@ const Header = () => {
     { href: '/', label: 'Accueil' },
     { href: '/catalogue', label: 'Catalogue' },
     { href: '/promotions', label: 'Promotions' },
-    { href: '/clients', label: 'Clients' },
   ];
 
   return (
@@ -83,6 +83,9 @@ const Header = () => {
                 )}
               </Button>
             </Link>
+
+            {/* User Menu */}
+            <UserMenu />
 
             {/* Mobile menu button */}
             <Button
