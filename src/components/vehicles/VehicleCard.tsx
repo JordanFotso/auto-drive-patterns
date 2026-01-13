@@ -5,23 +5,6 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Car, Bike } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Vehicle images mapping
-import eleganceGt from '@/assets/vehicles/elegance-gt.jpg';
-import voyagerLuxe from '@/assets/vehicles/voyager-luxe.jpg';
-import urbanRider from '@/assets/vehicles/urban-rider.jpg';
-import thunderX from '@/assets/vehicles/thunder-x.jpg';
-import electraVision from '@/assets/vehicles/electra-vision.jpg';
-import nomadExplorer from '@/assets/vehicles/nomad-explorer.jpg';
-
-const vehicleImages: Record<string, string> = {
-  'v1': eleganceGt,
-  'v2': voyagerLuxe,
-  'v3': urbanRider,
-  'v4': thunderX,
-  'v5': electraVision,
-  'v6': nomadExplorer,
-};
-
 interface VehicleCardProps {
   vehicle: Vehicle;
   className?: string;
@@ -29,7 +12,7 @@ interface VehicleCardProps {
 
 const VehicleCard = ({ vehicle, className }: VehicleCardProps) => {
   const discountedPrice = vehicle.isOnSale && vehicle.saleDiscount
-    ? vehicle.basePrice * (1 - vehicle.saleDiscount / 100)
+    ? vehicle.basePrice - vehicle.saleDiscount
     : vehicle.basePrice;
 
   const formatPrice = (price: number) => {
@@ -40,7 +23,7 @@ const VehicleCard = ({ vehicle, className }: VehicleCardProps) => {
     }).format(price);
   };
 
-  const VehicleIcon = vehicle.type === 'automobile' ? Car : Bike;
+  const VehicleIcon = vehicle.type.toLowerCase() === 'automobile' ? Car : Bike;
 
   return (
     <div
@@ -52,20 +35,20 @@ const VehicleCard = ({ vehicle, className }: VehicleCardProps) => {
       {/* Sale badge */}
       {vehicle.isOnSale && (
         <Badge className="absolute top-4 left-4 z-10 bg-destructive text-destructive-foreground">
-          -{vehicle.saleDiscount}%
+          -{((vehicle.saleDiscount / vehicle.basePrice) * 100).toFixed(0)}%
         </Badge>
       )}
 
       {/* Vehicle type badge */}
       <Badge variant="outline" className="absolute top-4 right-4 z-10 bg-card/80 backdrop-blur-sm">
         <VehicleIcon className="h-3 w-3 mr-1" />
-        {vehicle.type === 'automobile' ? 'Auto' : 'Scooter'}
+        {vehicle.type === 'AUTOMOBILE' ? 'Auto' : 'Scooter'}
       </Badge>
 
       {/* Image container */}
       <div className="relative h-48 md:h-56 overflow-hidden bg-gradient-to-b from-muted to-muted/50">
         <img
-          src={vehicleImages[vehicle.id] || eleganceGt}
+          src={vehicle.image} // Utiliser directement l'URL de l'image du véhicule
           alt={vehicle.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />

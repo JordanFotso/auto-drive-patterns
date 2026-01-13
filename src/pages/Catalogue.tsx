@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { vehicles } from '@/data/vehicles';
 import { Vehicle, VehicleType } from '@/types/vehicle';
 import VehicleCard from '@/components/vehicles/VehicleCard';
 import SearchBar from '@/components/vehicles/SearchBar';
@@ -8,6 +7,7 @@ import Footer from '@/components/layout/Footer';
 import { LayoutGrid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useVehicles } from '@/hooks/useVehicles'; // Import du hook
 
 const Catalogue = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -15,13 +15,17 @@ const Catalogue = () => {
   const [typeFilter, setTypeFilter] = useState<'all' | VehicleType>('all');
   const [gridLayout, setGridLayout] = useState<1 | 3>(3);
 
+  const { data: vehicles, isLoading, isError, error } = useVehicles();
+
   // Filter and search vehicles
   const filteredVehicles = useMemo(() => {
+    if (isLoading || isError || !vehicles) return [];
+
     let result = vehicles;
 
     // Apply type filter
     if (typeFilter !== 'all') {
-      result = result.filter((v) => v.type === typeFilter);
+      result = result.filter((v) => v.type.toLowerCase() === typeFilter.toLowerCase());
     }
 
     // Apply search query
@@ -31,7 +35,7 @@ const Catalogue = () => {
       result = result.filter((vehicle) => {
         const searchableText = `
           ${vehicle.name} ${vehicle.brand} ${vehicle.model} ${vehicle.description}
-          ${vehicle.specifications.engine} ${vehicle.specifications.power}
+          ${vehicle.specifications?.engine || ''} ${vehicle.specifications?.power || ''}
           ${vehicle.type}
         `.toLowerCase();
 
@@ -44,7 +48,7 @@ const Catalogue = () => {
     }
 
     return result;
-  }, [searchQuery, searchOperator, typeFilter]);
+  }, [searchQuery, searchOperator, typeFilter, vehicles, isLoading, isError]);
 
   const handleSearch = (query: string, operator: 'AND' | 'OR') => {
     setSearchQuery(query);
@@ -54,6 +58,22 @@ const Catalogue = () => {
   const handleFilterType = (type: 'all' | VehicleType) => {
     setTypeFilter(type);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-xl text-foreground">Chargement des véhicules...</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-xl text-red-500">Erreur: {error?.message}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
