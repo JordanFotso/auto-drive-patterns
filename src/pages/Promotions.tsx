@@ -1,12 +1,27 @@
-import { vehicles } from '@/data/vehicles';
 import VehicleCard from '@/components/vehicles/VehicleCard';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Tag } from 'lucide-react';
+import { usePromotions } from '@/hooks/usePromotions'; // Import du hook
 
 const Promotions = () => {
-  // Filter vehicles on sale
-  const saleVehicles = vehicles.filter((v) => v.isOnSale);
+  const { data: promotions, isLoading, isError, error } = usePromotions();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-xl text-foreground">Chargement des promotions...</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-xl text-red-500">Erreur: {error?.message}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -33,9 +48,9 @@ const Promotions = () => {
         {/* Vehicles grid */}
         <section className="py-12">
           <div className="container mx-auto px-4">
-            {saleVehicles.length > 0 ? (
+            {promotions && promotions.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {saleVehicles.map((vehicle, index) => (
+                {promotions.map((vehicle, index) => (
                   <div
                     key={vehicle.id}
                     className="animate-fade-up"
