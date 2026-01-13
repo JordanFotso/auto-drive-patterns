@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { vehicles } from '@/data/vehicles';
 import { VehicleOption } from '@/types/vehicle';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -9,23 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/CartContext';
 import { ArrowLeft, ShoppingCart, Car, Bike, Zap, Gauge, Clock, Wind } from 'lucide-react';
-
-// Vehicle images mapping
-import eleganceGt from '@/assets/vehicles/elegance-gt.jpg';
-import voyagerLuxe from '@/assets/vehicles/voyager-luxe.jpg';
-import urbanRider from '@/assets/vehicles/urban-rider.jpg';
-import thunderX from '@/assets/vehicles/thunder-x.jpg';
-import electraVision from '@/assets/vehicles/electra-vision.jpg';
-import nomadExplorer from '@/assets/vehicles/nomad-explorer.jpg';
-
-const vehicleImages: Record<string, string> = {
-  'v1': eleganceGt,
-  'v2': voyagerLuxe,
-  'v3': urbanRider,
-  'v4': thunderX,
-  'v5': electraVision,
-  'v6': nomadExplorer,
-};
+import { useVehicle } from '@/hooks/useVehicle'; // Import du hook
 
 const VehicleDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,8 +16,43 @@ const VehicleDetail = () => {
   const { addToCart } = useCart();
   const [selectedOptions, setSelectedOptions] = useState<VehicleOption[]>([]);
 
-  const vehicle = vehicles.find((v) => v.id === id);
+  const { data: vehicle, isLoading, isError, error } = useVehicle(id || ''); // Passer une chaîne vide si id est undefined
 
+  // Calculs du prix, dépendent de `vehicle` donc doivent être après la vérification `!vehicle` si `vehicle` peut être undefined
+  // Cependant, les hooks `useMemo` DOIVENT être appelés de manière inconditionnelle.
+  // Nous allons les laisser ici et s'assurer que `vehicle` est défini avant d'y accéder à l'intérieur de useMemo.
+
+  const discountedPrice = useMemo(() => {
+    if (!vehicle) return 0; // Gérer le cas où vehicle est undefined pendant le premier rendu
+    return vehicle.isOnSale && vehicle.saleDiscount
+      ? vehicle.basePrice - vehicle.saleDiscount
+      : vehicle.basePrice;
+  }, [vehicle]);
+
+  const optionsPrice = useMemo(() => {
+    return selectedOptions.reduce((sum, opt) => sum + opt.price, 0);
+  }, [selectedOptions]);
+
+  const totalPrice = discountedPrice + optionsPrice;
+
+  // Gérer la logique de chargement et d'erreur avant d'accéder à `vehicle` pour le rendu
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-xl text-foreground">Chargement du véhicule...</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-xl text-red-500">Erreur: {error?.message}</p>
+      </div>
+    );
+  }
+
+  // Si le véhicule n'est pas trouvé après le chargement
   if (!vehicle) {
     return (
       <div className="min-h-screen bg-background">
@@ -50,13 +68,6 @@ const VehicleDetail = () => {
     );
   }
 
-  const basePrice = vehicle.isOnSale && vehicle.saleDiscount
-    ? vehicle.basePrice * (1 - vehicle.saleDiscount / 100)
-    : vehicle.basePrice;
-
-  const optionsPrice = selectedOptions.reduce((sum, opt) => sum + opt.price, 0);
-  const totalPrice = basePrice + optionsPrice;
-
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
@@ -70,13 +81,13 @@ const VehicleDetail = () => {
     navigate('/panier');
   };
 
-  const VehicleIcon = vehicle.type === 'automobile' ? Car : Bike;
+  const VehicleIcon = vehicle.type.toLowerCase() === 'automobile' ? Car : Bike;
 
   const specs = [
-    { icon: Zap, label: 'Moteur', value: vehicle.specifications.engine },
-    { icon: Gauge, label: 'Puissance', value: vehicle.specifications.power },
-    { icon: Clock, label: '0-100 km/h', value: vehicle.specifications.acceleration },
-    { icon: Wind, label: 'Vitesse max', value: vehicle.specifications.topSpeed },
+    { icon: Zap, label: 'Moteur', value: vehicle.specifications?.engine || 'N/A' },
+    { icon: Gauge, label: 'Puissance', value: vehicle.specifications?.power || 'N/A' },
+    { icon: Clock, label: '0-100 km/h', value: vehicle.specifications?.acceleration || 'N/A' },
+    { icon: Wind, label: 'Vitesse max', value: vehicle.specifications?.topSpeed || 'N/A' },
   ];
 
   return (
@@ -101,11 +112,11 @@ const VehicleDetail = () => {
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-muted">
                 {vehicle.isOnSale && (
                   <Badge className="absolute top-4 left-4 z-10 bg-destructive text-destructive-foreground">
-                    -{vehicle.saleDiscount}%
+                    -{((vehicle.saleDiscount / vehicle.basePrice) * 100).toFixed(0)}%
                   </Badge>
                 )}
                 <img
-                  src={vehicleImages[vehicle.id] || eleganceGt}
+                  src={vehicle.image}
                   alt={vehicle.name}
                   className="w-full h-full object-cover"
                 />
@@ -133,7 +144,7 @@ const VehicleDetail = () => {
                 <div className="flex items-center gap-2 mb-2">
                   <Badge variant="outline">
                     <VehicleIcon className="h-3 w-3 mr-1" />
-                    {vehicle.type === 'automobile' ? 'Automobile' : 'Scooter'}
+                    {vehicle.type === 'AUTOMOBILE' ? 'Automobile' : 'Scooter'}
                   </Badge>
                   <span className="text-sm text-muted-foreground">{vehicle.brand}</span>
                 </div>
@@ -157,7 +168,7 @@ const VehicleDetail = () => {
                         </span>
                       )}
                       <span className="text-2xl font-bold text-foreground">
-                        {formatPrice(basePrice)}
+                        {formatPrice(discountedPrice)}
                       </span>
                     </div>
                   </div>
@@ -179,7 +190,7 @@ const VehicleDetail = () => {
               </div>
 
               {/* Options configurator */}
-              {vehicle.availableOptions.length > 0 && (
+              {vehicle.availableOptions && vehicle.availableOptions.length > 0 && (
                 <div className="p-6 rounded-xl bg-card border border-border">
                   <OptionsConfigurator
                     availableOptions={vehicle.availableOptions}
