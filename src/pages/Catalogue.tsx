@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Vehicle, VehicleType } from '@/types/vehicle';
 import VehicleCard from '@/components/vehicles/VehicleCard';
 import SearchBar from '@/components/vehicles/SearchBar';
@@ -16,6 +16,12 @@ const Catalogue = () => {
   const [gridLayout, setGridLayout] = useState<1 | 3>(3);
 
   const { data: vehicles, isLoading, isError, error } = useVehicles();
+
+  useEffect(() => {
+    if (vehicles) {
+      console.log('Vehicles from API:', vehicles);
+    }
+  }, [vehicles]);
 
   // Filter and search vehicles
   const filteredVehicles = useMemo(() => {
@@ -135,7 +141,6 @@ const Catalogue = () => {
                 )}
               >
                 {filteredVehicles.map((vehicle, index) => {
-                  console.log(`Vehicle ${vehicle.id}: isOnSale=${vehicle.isOnSale}, saleDiscount=${vehicle.saleDiscount}, basePrice=${vehicle.basePrice}`);
                   return (
                   <div
                     key={vehicle.id}

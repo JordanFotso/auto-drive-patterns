@@ -50,12 +50,19 @@ const OptionsConfigurator = ({
   };
 
   const toggleOption = (option: VehicleOption) => {
+    console.log('--- toggleOption called ---');
+    console.log('Toggling option:', option.name);
+    console.log('Is it currently selected?', isSelected(option.id));
+    console.log('Current selected options:', selectedOptions.map(o => o.name));
+    
     if (isSelected(option.id)) {
       // Remove option
       onOptionsChange(selectedOptions.filter((o) => o.id !== option.id));
     } else if (!isIncompatible(option)) {
       // Add option
       onOptionsChange([...selectedOptions, option]);
+    } else {
+      console.log('Action blocked: Option is incompatible.');
     }
   };
 
@@ -93,7 +100,17 @@ const OptionsConfigurator = ({
                       ? "border-muted bg-muted/50 opacity-60 cursor-not-allowed"
                       : "border-border hover:border-gold/50 hover:bg-muted/30"
                   )}
-                  onClick={() => !incompatible && toggleOption(option)}
+                  onClick={() => {
+                    console.log('--- onClick ---');
+                    console.log('Clicked on:', option.name);
+                    console.log('Is it selected?', selected);
+                    console.log('Is it incompatible?', incompatible);
+                    if (!incompatible) {
+                      toggleOption(option);
+                    } else {
+                      console.log('onClick blocked due to incompatibility.');
+                    }
+                  }}
                 >
                   <div className="flex items-center space-x-3">
                     <div
