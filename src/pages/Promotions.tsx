@@ -50,7 +50,9 @@ const Promotions = () => {
           <div className="container mx-auto px-4">
             {promotions && promotions.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {promotions.map((vehicle, index) => (
+                {promotions.map((vehicle, index) => {
+                  console.log(`Vehicle ${vehicle.id}: isOnSale=${vehicle.isOnSale}, saleDiscount=${vehicle.saleDiscount}, basePrice=${vehicle.basePrice}`);
+                  return (
                   <div
                     key={vehicle.id}
                     className="animate-fade-up"
@@ -58,7 +60,7 @@ const Promotions = () => {
                   >
                     <VehicleCard vehicle={vehicle} />
                   </div>
-                ))}
+                )})}
               </div>
             ) : (
               <div className="text-center py-16">

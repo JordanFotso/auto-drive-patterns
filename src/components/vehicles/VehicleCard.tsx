@@ -78,14 +78,25 @@ const VehicleCard = ({ vehicle, className }: VehicleCardProps) => {
         {/* Price and CTA */}
         <div className="flex items-end justify-between">
           <div>
-            {vehicle.isOnSale && (
-              <p className="text-sm text-muted-foreground line-through">
+            {vehicle.isOnSale ? (
+              <>
+                <p className="text-sm text-muted-foreground line-through">
+                  {formatPrice(vehicle.basePrice)}
+                </p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-2xl font-bold text-foreground">
+                    {formatPrice(discountedPrice)}
+                  </p>
+                  <p className="text-sm font-semibold text-destructive">
+                    -{((vehicle.saleDiscount / vehicle.basePrice) * 100).toFixed(0)}%
+                  </p>
+                </div>
+              </>
+            ) : (
+              <p className="text-2xl font-bold text-foreground">
                 {formatPrice(vehicle.basePrice)}
               </p>
             )}
-            <p className="text-2xl font-bold text-foreground">
-              {formatPrice(discountedPrice)}
-            </p>
           </div>
           <Link to={`/vehicule/${vehicle.id}`}>
             <Button variant="premium" size="sm" className="group/btn">

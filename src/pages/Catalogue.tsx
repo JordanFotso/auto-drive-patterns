@@ -134,7 +134,9 @@ const Catalogue = () => {
                   gridLayout === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
                 )}
               >
-                {filteredVehicles.map((vehicle, index) => (
+                {filteredVehicles.map((vehicle, index) => {
+                  console.log(`Vehicle ${vehicle.id}: isOnSale=${vehicle.isOnSale}, saleDiscount=${vehicle.saleDiscount}, basePrice=${vehicle.basePrice}`);
+                  return (
                   <div
                     key={vehicle.id}
                     className="animate-fade-up"
@@ -142,7 +144,7 @@ const Catalogue = () => {
                   >
                     <VehicleCard vehicle={vehicle} />
                   </div>
-                ))}
+                )})}
               </div>
             ) : (
               <div className="text-center py-16">
