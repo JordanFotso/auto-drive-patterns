@@ -1,9 +1,27 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Play } from 'lucide-react';
 import heroImage from '@/assets/hero-car.jpg';
+import { useVehicles } from '@/hooks/useVehicles';
 
 const Hero = () => {
+  const { data: vehicles, isLoading } = useVehicles();
+
+  const stats = useMemo(() => {
+    if (!vehicles) {
+      return {
+        vehicleCount: '150+',
+        brandCount: '50+',
+      };
+    }
+    const brandCount = new Set(vehicles.map(v => v.brand)).size;
+    return {
+      vehicleCount: vehicles.length.toString(),
+      brandCount: brandCount.toString(),
+    };
+  }, [vehicles]);
+
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-hero">
       {/* Background image with overlay */}
@@ -55,11 +73,11 @@ const Hero = () => {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-8 mt-12 pt-12 border-t border-cream/10 animate-fade-up stagger-4">
             <div>
-              <p className="text-3xl md:text-4xl font-bold text-gold">150+</p>
+              <p className="text-3xl md:text-4xl font-bold text-gold">{isLoading ? '...' : stats.vehicleCount}</p>
               <p className="text-sm text-cream/60 mt-1">Véhicules</p>
             </div>
             <div>
-              <p className="text-3xl md:text-4xl font-bold text-gold">50+</p>
+              <p className="text-3xl md:text-4xl font-bold text-gold">{isLoading ? '...' : stats.brandCount}</p>
               <p className="text-sm text-cream/60 mt-1">Marques</p>
             </div>
             <div>

@@ -6,25 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, Minus, Plus, ArrowLeft, ShoppingBag, Undo, Redo } from 'lucide-react';
 
-// Vehicle images mapping
-import eleganceGt from '@/assets/vehicles/elegance-gt.jpg';
-import voyagerLuxe from '@/assets/vehicles/voyager-luxe.jpg';
-import urbanRider from '@/assets/vehicles/urban-rider.jpg';
-import thunderX from '@/assets/vehicles/thunder-x.jpg';
-import electraVision from '@/assets/vehicles/electra-vision.jpg';
-import nomadExplorer from '@/assets/vehicles/nomad-explorer.jpg';
-
-const vehicleImages: Record<string, string> = {
-  'v1': eleganceGt,
-  'v2': voyagerLuxe,
-  'v3': urbanRider,
-  'v4': thunderX,
-  'v5': electraVision,
-  'v6': nomadExplorer,
-};
-
 const Cart = () => {
-  const { items, removeFromCart, clearCart, getTotalPrice, canUndo, canRedo, undo, redo } = useCart();
+  const { 
+    items, 
+    removeFromCart, 
+    incrementQuantity, 
+    decrementQuantity, 
+    clearCart, 
+    getTotalPrice, 
+    canUndo, 
+    canRedo, 
+    undo, 
+    redo 
+  } = useCart();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', {
@@ -36,10 +30,10 @@ const Cart = () => {
 
   const getItemPrice = (item: typeof items[0]) => {
     const vehiclePrice = item.vehicle.isOnSale && item.vehicle.saleDiscount
-      ? item.vehicle.basePrice * (1 - item.vehicle.saleDiscount / 100)
+      ? item.vehicle.basePrice - item.vehicle.saleDiscount
       : item.vehicle.basePrice;
     const optionsPrice = item.selectedOptions.reduce((sum, opt) => sum + opt.price, 0);
-    return (vehiclePrice + optionsPrice) * item.quantity;
+    return (vehiclePrice + optionsPrice);
   };
 
   return (
@@ -115,7 +109,7 @@ const Cart = () => {
                     {/* Image */}
                     <div className="w-full md:w-40 h-32 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                       <img
-                        src={vehicleImages[item.vehicle.id] || eleganceGt}
+                        src={item.vehicle.image}
                         alt={item.vehicle.name}
                         className="w-full h-full object-cover"
                       />
@@ -149,13 +143,15 @@ const Cart = () => {
                         </div>
                       )}
 
-                      {/* Price */}
+                      {/* Price and Quantity */}
                       <div className="mt-3 flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">
-                          Quantité: {item.quantity}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <Button size="icon" variant="outline" onClick={() => decrementQuantity(item.vehicle.id)}><Minus className="h-4 w-4"/></Button>
+                          <span className="font-bold w-4 text-center">{item.quantity}</span>
+                          <Button size="icon" variant="outline" onClick={() => incrementQuantity(item.vehicle.id)}><Plus className="h-4 w-4"/></Button>
+                        </div>
                         <span className="text-lg font-bold text-foreground">
-                          {formatPrice(getItemPrice(item))}
+                          {formatPrice(getItemPrice(item) * item.quantity)}
                         </span>
                       </div>
                     </div>
@@ -174,10 +170,10 @@ const Cart = () => {
                     {items.map((item) => (
                       <div key={item.vehicle.id} className="flex justify-between text-sm">
                         <span className="text-muted-foreground truncate mr-2">
-                          {item.vehicle.name}
+                          {item.vehicle.name} ({item.quantity}x)
                         </span>
                         <span className="text-foreground font-medium">
-                          {formatPrice(getItemPrice(item))}
+                          {formatPrice(getItemPrice(item) * item.quantity)}
                         </span>
                       </div>
                     ))}

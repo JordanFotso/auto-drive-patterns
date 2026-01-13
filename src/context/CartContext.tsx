@@ -1,14 +1,13 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { CartItem, CartMemento, Vehicle, VehicleOption } from '@/types/vehicle';
 import { toast } from 'sonner';
 
 interface CartContextType {
   items: CartItem[];
-  history: CartMemento[];
-  currentHistoryIndex: number;
   addToCart: (vehicle: Vehicle, options: VehicleOption[]) => void;
   removeFromCart: (vehicleId: string) => void;
-  updateItemOptions: (vehicleId: string, options: VehicleOption[]) => void;
+  incrementQuantity: (vehicleId: string) => void;
+  decrementQuantity: (vehicleId: string) => void;
   clearCart: () => void;
   undo: () => void;
   redo: () => void;
@@ -19,81 +18,80 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const LOCAL_STORAGE_KEY = 'vehiclub_cart';
+
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [history, setHistory] = useState<CartMemento[]>([{ items: [], timestamp: new Date() }]);
+  const [items, setItems] = useState<CartItem[]>(() => {
+    try {
+      const storedItems = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+      return storedItems ? JSON.parse(storedItems) : [];
+    } catch (error) {
+      console.error('Failed to parse cart from localStorage', error);
+      return [];
+    }
+  });
+
+  const [history, setHistory] = useState<CartMemento[]>([{ items, timestamp: new Date() }]);
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0);
 
-  // Memento pattern: save current state to history
-  const saveToHistory = useCallback((newItems: CartItem[]) => {
-    const newMemento: CartMemento = {
-      items: JSON.parse(JSON.stringify(newItems)),
-      timestamp: new Date(),
-    };
-    
-    // Remove any future states if we're not at the end
+  // Save to localStorage whenever items change
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
+    } catch (error) {
+      console.error('Failed to save cart to localStorage', error);
+    }
+  }, [items]);
+
+  const updateStateAndHistory = useCallback((newItems: CartItem[]) => {
+    setItems(newItems);
+    const newMemento: CartMemento = { items: JSON.parse(JSON.stringify(newItems)), timestamp: new Date() };
     const newHistory = history.slice(0, currentHistoryIndex + 1);
     newHistory.push(newMemento);
-    
-    // Keep only last 20 states
-    if (newHistory.length > 20) {
-      newHistory.shift();
-    }
-    
-    setHistory(newHistory);
-    setCurrentHistoryIndex(newHistory.length - 1);
+    setHistory(newHistory.slice(-20)); // Keep last 20 states
+    setCurrentHistoryIndex(newHistory.slice(-20).length - 1);
   }, [history, currentHistoryIndex]);
 
   const addToCart = useCallback((vehicle: Vehicle, options: VehicleOption[]) => {
-    setItems(prev => {
-      const existingIndex = prev.findIndex(item => item.vehicle.id === vehicle.id);
-      let newItems: CartItem[];
-      
-      if (existingIndex >= 0) {
-        newItems = [...prev];
-        newItems[existingIndex] = {
-          ...newItems[existingIndex],
-          selectedOptions: options,
-          quantity: newItems[existingIndex].quantity + 1,
-        };
-      } else {
-        newItems = [...prev, { vehicle, selectedOptions: options, quantity: 1 }];
-      }
-      
-      saveToHistory(newItems);
-      return newItems;
-    });
+    const existingIndex = items.findIndex(item => item.vehicle.id === vehicle.id);
+    let newItems: CartItem[];
+
+    if (existingIndex >= 0) {
+      newItems = [...items];
+      newItems[existingIndex].quantity += 1;
+    } else {
+      newItems = [...items, { vehicle, selectedOptions: options, quantity: 1 }];
+    }
+    
+    updateStateAndHistory(newItems);
     toast.success(`${vehicle.name} ajouté au panier`);
-  }, [saveToHistory]);
+  }, [items, updateStateAndHistory]);
 
   const removeFromCart = useCallback((vehicleId: string) => {
-    setItems(prev => {
-      const newItems = prev.filter(item => item.vehicle.id !== vehicleId);
-      saveToHistory(newItems);
-      return newItems;
-    });
+    const newItems = items.filter(item => item.vehicle.id !== vehicleId);
+    updateStateAndHistory(newItems);
     toast.success('Article retiré du panier');
-  }, [saveToHistory]);
+  }, [items, updateStateAndHistory]);
 
-  const updateItemOptions = useCallback((vehicleId: string, options: VehicleOption[]) => {
-    setItems(prev => {
-      const newItems = prev.map(item =>
-        item.vehicle.id === vehicleId
-          ? { ...item, selectedOptions: options }
-          : item
-      );
-      saveToHistory(newItems);
-      return newItems;
-    });
-  }, [saveToHistory]);
+  const incrementQuantity = useCallback((vehicleId: string) => {
+    const newItems = items.map(item =>
+      item.vehicle.id === vehicleId ? { ...item, quantity: item.quantity + 1 } : item
+    );
+    updateStateAndHistory(newItems);
+  }, [items, updateStateAndHistory]);
 
+  const decrementQuantity = useCallback((vehicleId: string) => {
+    const newItems = items.map(item =>
+      item.vehicle.id === vehicleId && item.quantity > 1 ? { ...item, quantity: item.quantity - 1 } : item
+    ).filter(item => item.quantity > 0); // Remove if quantity becomes 0
+    updateStateAndHistory(newItems);
+  }, [items, updateStateAndHistory]);
+  
   const clearCart = useCallback(() => {
-    saveToHistory([]);
-    setItems([]);
+    updateStateAndHistory([]);
     toast.success('Panier vidé');
-  }, [saveToHistory]);
+  }, [updateStateAndHistory]);
 
-  // Memento pattern: restore previous state
   const undo = useCallback(() => {
     if (currentHistoryIndex > 0) {
       const newIndex = currentHistoryIndex - 1;
@@ -115,7 +113,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getTotalPrice = useCallback(() => {
     return items.reduce((total, item) => {
       const vehiclePrice = item.vehicle.isOnSale && item.vehicle.saleDiscount
-        ? item.vehicle.basePrice * (1 - item.vehicle.saleDiscount / 100)
+        ? item.vehicle.basePrice - item.vehicle.saleDiscount
         : item.vehicle.basePrice;
       
       const optionsPrice = item.selectedOptions.reduce((sum, opt) => sum + opt.price, 0);
@@ -128,11 +126,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <CartContext.Provider
       value={{
         items,
-        history,
-        currentHistoryIndex,
         addToCart,
         removeFromCart,
-        updateItemOptions,
+        incrementQuantity,
+        decrementQuantity,
         clearCart,
         undo,
         redo,

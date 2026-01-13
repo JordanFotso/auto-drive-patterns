@@ -1,7 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { Vehicle, VehicleOption } from '@/types/vehicle';
+import { Vehicle } from '@/types/vehicle';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
+interface UseVehiclesOptions {
+  sortBy?: 'price_desc';
+  limit?: number;
+}
 
 const fetchVehicles = async (): Promise<Vehicle[]> => {
   const response = await fetch(`${API_BASE_URL}/api/vehicules/catalogue`);
@@ -29,21 +34,31 @@ const fetchVehicles = async (): Promise<Vehicle[]> => {
       topSpeed: v.specifications?.topSpeed || '',
     },
     availableOptions: (v.availableOptions || []).map((opt: any) => ({
-      id: opt.id, // Utilise l'ID métier (string)
+      id: opt.id,
       name: opt.name,
       price: opt.price,
       category: opt.category,
       incompatibleWith: opt.incompatibleWith || [],
     })),
     inStockSince: new Date(v.inStockSince),
-    isOnSale: v.onSale, // Utiliser 'onSale' qui est le nom de la propriété générée par Jackson
+    isOnSale: v.onSale,
     saleDiscount: v.saleDiscount || 0,
   }));
 };
 
-export const useVehicles = () => {
-  return useQuery<Vehicle[], Error>({
+export const useVehicles = (options: UseVehiclesOptions = {}) => {
+  return useQuery<Vehicle[], Error, Vehicle[]>({
     queryKey: ['vehicles'],
     queryFn: fetchVehicles,
+    select: (data) => {
+      let vehicles = [...data];
+      if (options.sortBy === 'price_desc') {
+        vehicles.sort((a, b) => b.basePrice - a.basePrice);
+      }
+      if (options.limit) {
+        vehicles = vehicles.slice(0, options.limit);
+      }
+      return vehicles;
+    },
   });
 };

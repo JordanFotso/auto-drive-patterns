@@ -1,12 +1,15 @@
-import { vehicles } from '@/data/vehicles';
 import VehicleCard from '@/components/vehicles/VehicleCard';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { useVehicles } from '@/hooks/useVehicles';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const FeaturedVehicles = () => {
-  // Get featured vehicles (first 3)
-  const featuredVehicles = vehicles.slice(0, 3);
+  const { data: featuredVehicles, isLoading, isError } = useVehicles({
+    sortBy: 'price_desc',
+    limit: 3,
+  });
 
   return (
     <section className="py-20 bg-background">
@@ -31,15 +34,25 @@ const FeaturedVehicles = () => {
 
         {/* Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredVehicles.map((vehicle, index) => (
-            <div
-              key={vehicle.id}
-              className="animate-fade-up"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <VehicleCard vehicle={vehicle} />
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, index) => (
+              <Skeleton key={index} className="h-[400px] w-full rounded-xl" />
+            ))
+          ) : isError || !featuredVehicles ? (
+            <div className="col-span-3 text-center text-destructive">
+              Erreur lors du chargement des véhicules.
             </div>
-          ))}
+          ) : (
+            featuredVehicles.map((vehicle, index) => (
+              <div
+                key={vehicle.id}
+                className="animate-fade-up"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <VehicleCard vehicle={vehicle} />
+              </div>
+            ))
+          )}
         </div>
       </div>
     </section>
