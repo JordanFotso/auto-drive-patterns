@@ -11,6 +11,7 @@ interface VehicleCardProps {
 }
 
 const VehicleCard = ({ vehicle, className }: VehicleCardProps) => {
+  console.log('VehicleCard received vehicle:', vehicle);
   const discountedPrice = vehicle.isOnSale && vehicle.saleDiscount
     ? vehicle.basePrice - vehicle.saleDiscount
     : vehicle.basePrice;
