@@ -1,12 +1,14 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, Minus, Plus, ArrowLeft, ShoppingBag, Undo, Redo } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext'; // Import useAuth
 
 const Cart = () => {
+  const navigate = useNavigate();
   const { 
     items, 
     removeFromCart, 
@@ -19,6 +21,7 @@ const Cart = () => {
     undo, 
     redo 
   } = useCart();
+  const { isAuthenticated } = useAuth(); // Récupérer l'état d'authentification
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', {
@@ -34,6 +37,14 @@ const Cart = () => {
       : item.vehicle.basePrice;
     const optionsPrice = item.selectedOptions.reduce((sum, opt) => sum + opt.price, 0);
     return (vehiclePrice + optionsPrice);
+  };
+
+  const handleCheckoutClick = () => {
+    if (isAuthenticated) {
+      navigate('/checkout');
+    } else {
+      navigate('/login');
+    }
   };
 
   return (
@@ -187,11 +198,9 @@ const Cart = () => {
                       </span>
                     </div>
 
-                    <Link to="/checkout">
-                      <Button variant="hero" size="lg" className="w-full">
-                        Procéder au paiement
-                      </Button>
-                    </Link>
+                    <Button variant="hero" size="lg" className="w-full" onClick={handleCheckoutClick}>
+                      Procéder au paiement
+                    </Button>
 
                     <Link to="/catalogue">
                       <Button variant="ghost" className="w-full mt-3">
