@@ -1,81 +1,118 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { toast } from 'sonner';
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  token: string | null;
+  user: { email: string; roles: string[] } | null; // Similaire à UserDetails, sans le password
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (email: string, password: string, societeId?: string) => Promise<boolean>;
+  logout: () => void;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const LOCAL_STORAGE_TOKEN_KEY = 'jwt_token';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [token, setToken] = useState<string | null>(localStorage.getItem(LOCAL_STORAGE_TOKEN_KEY));
+  const [user, setUser] = useState<{ email: string; roles: string[] } | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Charger les infos utilisateur depuis le token
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+    if (token) {
+      try {
+        // Dans une vraie application, vous décoderiez le token pour obtenir les infos utilisateur
+        // Pour l'instant, on se contente de l'email pour la démo
+        const decodedToken = JSON.parse(atob(token.split('.')[1]));
+        setUser({ email: decodedToken.sub, roles: [] }); // Les rôles ne sont pas encore dans le token ici
+      } catch (e) {
+        console.error("Failed to decode token", e);
+        setToken(null);
+        localStorage.removeItem(LOCAL_STORAGE_TOKEN_KEY);
       }
-    );
+    }
+    setLoading(false);
+  }, [token]);
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+  const login = useCallback(async (email, password) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast.error(errorData.message || 'Échec de la connexion.');
+        return false;
+      }
+
+      const data = await response.json();
+      setToken(data.token);
+      localStorage.setItem(LOCAL_STORAGE_TOKEN_KEY, data.token);
+      toast.success('Connexion réussie !');
+      return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Erreur réseau ou du serveur.');
+      return false;
+    } finally {
       setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    }
   }, []);
 
-  const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl
+  const register = useCallback(async (email, password, societeId) => {
+    setLoading(true);
+    try {
+      const body: { email: string; password: string; societeId?: string } = { email, password };
+      if (societeId) {
+        body.societeId = societeId;
       }
-    });
-    
-    return { error: error as Error | null };
-  };
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    return { error: error as Error | null };
-  };
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-  };
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast.error(errorData.message || 'Échec de l\'inscription.');
+        return false;
+      }
+
+      toast.success('Inscription réussie ! Vous pouvez maintenant vous connecter.');
+      return true;
+    } catch (error) {
+      console.error('Register error:', error);
+      toast.error('Erreur réseau ou du serveur.');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const logout = useCallback(() => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem(LOCAL_STORAGE_TOKEN_KEY);
+    toast.info('Déconnecté.');
+  }, []);
+
+  const isAuthenticated = !!token;
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        loading,
-        signUp,
-        signIn,
-        signOut,
-      }}
-    >
+    <AuthContext.Provider value={{ token, user, isAuthenticated, login, register, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
