@@ -24,6 +24,8 @@ const fetchPromotions = async (): Promise<Vehicle[]> => {
     },
     // Gérer availableOptions si elles sont nulles ou non définies
     availableOptions: vehicle.availableOptions || [],
+    isOnSale: vehicle.onSale || false, // Ensure isOnSale is explicitly carried over or defaults to false
+    saleDiscount: vehicle.saleDiscount || 0, // Ensure saleDiscount is explicitly carried over or defaults to 0
   }));
 };
 

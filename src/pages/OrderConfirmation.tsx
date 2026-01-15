@@ -176,8 +176,11 @@ const OrderConfirmation = () => {
     URL.revokeObjectURL(url);
   };
   
-  const getDocumentIcon = (type: string) => ({'demande_immatriculation':'📋','certificat_cession':'📜','bon_commande':'🧾'}[type] || '📄');
-  const getDocumentTitle = (type: string) => ({'demande_immatriculation':"Demande d'Immatriculation",'certificat_cession':'Certificat de Cession','bon_commande':'Bon de Commande'}[type] || 'Document');
+  const documentTitles = [
+    "Demande d'Immatriculation",
+    "Certificat de Cession",
+    "Bon de Commande",
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -249,10 +252,9 @@ const OrderConfirmation = () => {
                         </div>
                         {generatedLiasse && (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                            {generatedLiasse.documents.map((doc) => (
+                            {generatedLiasse.documents.map((doc, index) => (
                                 <div key={doc.type} className="p-4 bg-muted/50 rounded-lg border">
-                                <div className="text-3xl mb-2">{getDocumentIcon(doc.type)}</div>
-                                <p className="font-medium text-sm">{getDocumentTitle(doc.type)}</p>
+                                <p key={doc.type} className="font-bold text-base mb-2">{documentTitles[index]}</p>
                                 <div className="flex gap-2 mt-3">
                                     <Button variant="outline" size="sm" onClick={() => setPreviewDocument(doc)}><Eye className="h-3 w-3 mr-1" />Voir</Button>
                                     <Button variant="outline" size="sm" onClick={() => handleDownloadDocument(doc)}><Download className="h-3 w-3 mr-1" />Télécharger</Button>
@@ -286,7 +288,7 @@ const OrderConfirmation = () => {
 
       <Dialog open={!!previewDocument} onOpenChange={() => setPreviewDocument(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader><DialogTitle>{previewDocument && getDocumentTitle(previewDocument.type)}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{previewDocument && documentTitles[generatedLiasse.documents.indexOf(previewDocument)]}</DialogTitle></DialogHeader>
           <div className="flex-1 overflow-auto bg-white rounded-lg">
             {previewDocument && (
                 previewDocument.format === 'pdf' ? (
