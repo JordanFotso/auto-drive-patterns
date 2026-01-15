@@ -17,7 +17,7 @@ export class FranceTaxStrategy implements TaxStrategy {
   }
   
   getTaxRate(): number {
-    return 20;
+    return 0.20;
   }
 }
 
@@ -31,7 +31,7 @@ export class GermanyTaxStrategy implements TaxStrategy {
   }
   
   getTaxRate(): number {
-    return 19;
+    return 0.19;
   }
 }
 
@@ -45,7 +45,7 @@ export class BelgiumTaxStrategy implements TaxStrategy {
   }
   
   getTaxRate(): number {
-    return 21;
+    return 0.21;
   }
 }
 
@@ -59,7 +59,7 @@ export class SwitzerlandTaxStrategy implements TaxStrategy {
   }
   
   getTaxRate(): number {
-    return 7.7;
+    return 0.077;
   }
 }
 
@@ -73,7 +73,7 @@ export class ItalyTaxStrategy implements TaxStrategy {
   }
   
   getTaxRate(): number {
-    return 22;
+    return 0.22;
   }
 }
 
@@ -87,7 +87,7 @@ export class SpainTaxStrategy implements TaxStrategy {
   }
   
   getTaxRate(): number {
-    return 21;
+    return 0.21;
   }
 }
 

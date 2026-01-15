@@ -1,9 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+
+// Imports des contextes et stratégies existants
 import { useOrder } from '@/context/OrderContext';
 import { taxStrategies } from '@/patterns/strategy/TaxStrategy';
-import { CreditPaymentStrategy, creditDurations } from '@/patterns/strategy/PaymentStrategy';
+import { creditDurations } from '@/patterns/strategy/PaymentStrategy';
+import { CreditPaymentStrategy } from '@/patterns/strategy/PaymentStrategy';
+
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -15,15 +22,20 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { CreditCard, Banknote, MapPin, FileText, ArrowRight, Calculator } from 'lucide-react';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
 const Checkout = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { items, getTotalPrice, clearCart } = useCart();
+  const { token, isAuthenticated } = useAuth();
+
+  // Utilisation du useOrder context pour les stratégies de taxes et de paiement
   const { 
     taxStrategy, 
     paymentStrategy, 
     setTaxStrategy, 
     setPaymentStrategy, 
-    createOrder, 
     calculateTax 
   } = useOrder();
 
@@ -31,20 +43,18 @@ const Checkout = () => {
   const [selectedPayment, setSelectedPayment] = useState<'cash' | 'credit'>(paymentStrategy.type);
   const [creditDuration, setCreditDuration] = useState(36);
   const [downPayment, setDownPayment] = useState(0);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const baseTotal = getTotalPrice();
   const taxAmount = calculateTax(baseTotal);
   const totalWithTax = baseTotal + taxAmount;
 
-  // Calculate credit details if payment is credit
-  const getCreditDetails = () => {
+  // Calcul des détails de crédit via le useOrder context
+  const creditDetails = useMemo(() => {
     if (selectedPayment !== 'credit') return null;
     const creditStrategy = new CreditPaymentStrategy();
     return creditStrategy.calculateCredit(totalWithTax, creditDuration, downPayment);
-  };
+  }, [selectedPayment, totalWithTax, creditDuration, downPayment]);
 
-  const creditDetails = getCreditDetails();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', {
@@ -54,33 +64,69 @@ const Checkout = () => {
     }).format(price);
   };
 
+  const createOrderMutation = useMutation({
+    mutationFn: async (orderData: { items: any[]; typeCommande: string; paysLivraison: string }) => {
+      const response = await fetch(`${API_BASE_URL}/api/commandes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Échec de la création de la commande.');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast.success('Commande créée avec succès !');
+      clearCart();
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] }); // Invalider le cache des véhicules
+      navigate(`/commande/${data.id}`); // Rediriger vers la page de confirmation de commande
+    },
+    onError: (error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
+  });
+
   const handleCountryChange = (countryCode: string) => {
     setSelectedCountry(countryCode);
-    setTaxStrategy(countryCode);
+    setTaxStrategy(countryCode); // Utilise la fonction du useOrder context
   };
 
   const handlePaymentChange = (type: 'cash' | 'credit') => {
     setSelectedPayment(type);
-    setPaymentStrategy(type);
+    setPaymentStrategy(type); // Utilise la fonction du useOrder context
   };
 
   const handleConfirmOrder = async () => {
-    if (items.length === 0) return;
-
-    setIsProcessing(true);
-
-    try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      const order = createOrder(items);
-      clearCart();
-      navigate(`/commande/${order.id}`);
-    } catch (error) {
-      console.error('Error creating order:', error);
-    } finally {
-      setIsProcessing(false);
+    if (!isAuthenticated) {
+      toast.error('Vous devez être connecté pour passer commande.');
+      navigate('/login');
+      return;
     }
+
+    if (items.length === 0) {
+      toast.error('Votre panier est vide.');
+      return;
+    }
+
+    // Préparer les items pour l'API
+    const apiItems = items.map(item => ({
+      vehicule: { id: item.vehicle.id },
+      quantity: item.quantity,
+      selectedOptionsIds: item.selectedOptions.map(opt => opt.id),
+    }));
+
+    createOrderMutation.mutate({
+      items: apiItems,
+      typeCommande: selectedPayment === 'cash' ? 'comptant' : 'credit', // Mapper au type du backend
+      paysLivraison: selectedCountry,
+    });
   };
 
   if (items.length === 0) {
@@ -129,14 +175,14 @@ const Checkout = () => {
                   <SelectContent>
                     {taxStrategies.map((strategy) => (
                       <SelectItem key={strategy.countryCode} value={strategy.countryCode}>
-                        {strategy.countryName} (TVA {strategy.getTaxRate()}%)
+                        {strategy.countryName} (TVA {strategy.getTaxRate() * 100}%)
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
 
                 <p className="text-sm text-muted-foreground mt-3">
-                  Les taxes seront calculées selon la réglementation de {taxStrategy.countryName} ({taxStrategy.getTaxRate()}%)
+                  Les taxes seront calculées selon la réglementation de {taxStrategy.countryName} ({taxStrategy.getTaxRate() * 100}%)
                 </p>
               </Card>
 
@@ -270,7 +316,7 @@ const Checkout = () => {
                       <span className="text-foreground font-medium">
                         {formatPrice(
                           ((item.vehicle.isOnSale && item.vehicle.saleDiscount
-                            ? item.vehicle.basePrice * (1 - item.vehicle.saleDiscount / 100)
+                            ? item.vehicle.basePrice - item.vehicle.saleDiscount
                             : item.vehicle.basePrice) +
                             item.selectedOptions.reduce((sum, opt) => sum + opt.price, 0)) *
                           item.quantity
@@ -288,7 +334,7 @@ const Checkout = () => {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">
-                      TVA ({taxStrategy.countryName} - {taxStrategy.getTaxRate()}%)
+                      TVA ({taxStrategy.countryName} - {taxStrategy.getTaxRate() * 100}%)
                     </span>
                     <span>{formatPrice(taxAmount)}</span>
                   </div>
@@ -319,9 +365,9 @@ const Checkout = () => {
                   size="lg"
                   className="w-full mt-6"
                   onClick={handleConfirmOrder}
-                  disabled={isProcessing}
+                  disabled={createOrderMutation.isPending || items.length === 0}
                 >
-                  {isProcessing ? (
+                  {createOrderMutation.isPending ? (
                     'Traitement en cours...'
                   ) : (
                     <>
