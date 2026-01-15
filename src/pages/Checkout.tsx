@@ -20,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { CreditCard, Banknote, MapPin, FileText, ArrowRight, Calculator } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -43,6 +44,7 @@ const Checkout = () => {
   const [selectedPayment, setSelectedPayment] = useState<'cash' | 'credit'>(paymentStrategy.type);
   const [creditDuration, setCreditDuration] = useState(36);
   const [downPayment, setDownPayment] = useState(0);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const baseTotal = getTotalPrice();
   const taxAmount = calculateTax(baseTotal);
@@ -295,6 +297,16 @@ const Checkout = () => {
                         </div>
                       </div>
                     )}
+                    
+                    <div className="pt-4 border-t border-border flex items-center space-x-2">
+                      <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)} />
+                      <label
+                        htmlFor="terms"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Je confirme avoir lu et accepté les conditions de financement.
+                      </label>
+                    </div>
                   </div>
                 )}
               </Card>
@@ -365,7 +377,11 @@ const Checkout = () => {
                   size="lg"
                   className="w-full mt-6"
                   onClick={handleConfirmOrder}
-                  disabled={createOrderMutation.isPending || items.length === 0}
+                  disabled={
+                    createOrderMutation.isPending || 
+                    items.length === 0 ||
+                    (selectedPayment === 'credit' && !agreedToTerms)
+                  }
                 >
                   {createOrderMutation.isPending ? (
                     'Traitement en cours...'

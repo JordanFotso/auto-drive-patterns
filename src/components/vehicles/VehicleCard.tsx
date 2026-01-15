@@ -43,7 +43,7 @@ const VehicleCard = ({ vehicle, className }: VehicleCardProps) => {
       {/* Vehicle type badge */}
       <Badge variant="outline" className="absolute top-4 right-4 z-10 bg-card/80 backdrop-blur-sm">
         <VehicleIcon className="h-3 w-3 mr-1" />
-        {vehicle.type === 'AUTOMOBILE' ? 'Auto' : 'Scooter'}
+        {vehicle.type.toLowerCase() === 'automobile' ? 'Auto' : 'Scooter'}
       </Badge>
 
       {/* Image container */}
