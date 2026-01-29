@@ -10,16 +10,18 @@ interface AuthLayoutProps {
 const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen w-full lg:grid lg:grid-cols-2">
-      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md space-y-8">
+      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 h-screen">
+        <div className="w-full max-w-md space-y-8 flex flex-col h-full">
           <div className="text-center">
             <Link to="/" className="inline-flex items-center gap-2 mb-4">
               <Car className="h-8 w-8 text-gold" />
-              <span className="text-2xl font-bold font-display text-foreground">AutoElite</span> {/* Changement ici */}
+              <span className="text-2xl font-bold font-display text-foreground">AutoElite</span>
             </Link>
           </div>
-          {children}
-          <div className="text-center mt-8"> {/* Ajout ici */}
+          <div className="flex-grow overflow-y-auto max-h-full pr-2"> {/* Added pr-2 for scrollbar spacing */}
+            {children}
+          </div>
+          <div className="text-center mt-8">
             <Link to="/" className="text-sm text-muted-foreground hover:text-gold inline-flex items-center">
               <ArrowLeft className="h-4 w-4 mr-1" />
               Retour au site
