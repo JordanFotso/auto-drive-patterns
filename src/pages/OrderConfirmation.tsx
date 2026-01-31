@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   Loader2
 } from 'lucide-react';
+import { generateOrderDocuments } from '@/patterns/builder/DocumentBuilder'; // Import the builder function
 import {
   Dialog,
   DialogContent,
@@ -82,17 +83,29 @@ const OrderConfirmation = () => {
   });
   
   // Mutation for document generation
-  const { mutate: generateDocs, isPending: isGeneratingDocs } = useMutation<Liasse, Error>({
+  const { mutate: generateDocs, isPending: isGeneratingDocs } = useMutation<Liasse | void, Error>({
     mutationFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/api/commandes/${id}/liasse?format=${selectedFormat}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error('Échec de la génération des documents.');
-      return response.json();
+      if (!order) {
+        throw new Error("Order data is not available.");
+      }
+      if (selectedFormat === 'pdf') {
+        await generateOrderDocuments(order, 'pdf'); // Direct PDF download
+        return; // No data to set for generatedLiasse
+      } else {
+        const response = await fetch(`${API_BASE_URL}/api/commandes/${id}/liasse?format=html`, { // Backend still provides HTML
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (!response.ok) throw new Error('Échec de la génération des documents HTML.');
+        return response.json();
+      }
     },
     onSuccess: (data) => {
-      setGeneratedLiasse(data);
-      toast.success('Documents générés avec succès !');
+      if (selectedFormat === 'html') {
+        setGeneratedLiasse(data as Liasse); // Cast to Liasse
+        toast.success('Documents HTML générés avec succès !');
+      } else {
+        toast.success('Document PDF généré et téléchargé avec succès !');
+      }
     },
     onError: (err) => {
       toast.error(err.message);

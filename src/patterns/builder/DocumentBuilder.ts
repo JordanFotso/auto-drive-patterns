@@ -114,23 +114,23 @@ export class HTMLRegistrationBuilder implements DocumentBuilder {
     <div style="margin-bottom: 20px; ${index > 0 ? 'border-top: 1px solid #ddd; padding-top: 20px;' : ''}">
       <div class="field">
         <span class="field-label">Véhicule:</span>
-        <span class="field-value">${item.vehicle.brand} ${item.vehicle.name}</span>
+        <span class="field-value">${item.vehicule.brand} ${item.vehicule.name}</span>
       </div>
       <div class="field">
         <span class="field-label">Modèle:</span>
-        <span class="field-value">${item.vehicle.model} (${item.vehicle.year})</span>
+        <span class="field-value">${item.vehicule.model} (${item.vehicule.year})</span>
       </div>
       <div class="field">
         <span class="field-label">Type:</span>
-        <span class="field-value">${item.vehicle.type === 'automobile' ? 'Automobile' : 'Scooter'}</span>
+        <span class="field-value">${item.vehicule.type === 'automobile' ? 'Automobile' : 'Scooter'}</span>
       </div>
       <div class="field">
         <span class="field-label">Motorisation:</span>
-        <span class="field-value">${item.vehicle.specifications.engine}</span>
+        <span class="field-value">${item.vehicule.specifications.engine}</span>
       </div>
       <div class="field">
         <span class="field-label">Puissance:</span>
-        <span class="field-value">${item.vehicle.specifications.power}</span>
+        <span class="field-value">${item.vehicule.specifications.power}</span>
       </div>
     </div>
 `;
@@ -257,15 +257,15 @@ export class HTMLCertificateBuilder implements DocumentBuilder {
     <div style="margin-bottom: 15px; padding: 15px; background: white; border-radius: 4px;">
       <div class="field">
         <span class="field-label">Désignation:</span>
-        <span class="field-value"><strong>${item.vehicle.brand} ${item.vehicle.name}</strong></span>
+        <span class="field-value"><strong>${item.vehicule.brand} ${item.vehicule.name}</strong></span>
       </div>
       <div class="field">
         <span class="field-label">Modèle / Année:</span>
-        <span class="field-value">${item.vehicle.model} / ${item.vehicle.year}</span>
+        <span class="field-value">${item.vehicule.model} / ${item.vehicule.year}</span>
       </div>
       <div class="field">
         <span class="field-label">Catégorie:</span>
-        <span class="field-value">${item.vehicle.type === 'automobile' ? 'Véhicule Particulier' : 'Deux-Roues'}</span>
+        <span class="field-value">${item.vehicule.type === 'automobile' ? 'Véhicule Particulier' : 'Deux-Roues'}</span>
       </div>
     </div>
 `;
@@ -421,17 +421,17 @@ export class HTMLOrderBuilder implements DocumentBuilder {
       <tbody>
 `;
     this.order.items.forEach((item) => {
-      const basePrice = item.vehicle.isOnSale && item.vehicle.saleDiscount
-        ? item.vehicle.basePrice * (1 - item.vehicle.saleDiscount / 100)
-        : item.vehicle.basePrice;
+      const basePrice = item.vehicule.isOnSale && item.vehicule.saleDiscount
+        ? item.vehicule.basePrice * (1 - item.vehicule.saleDiscount / 100)
+        : item.vehicule.basePrice;
       const optionsPrice = item.selectedOptions.reduce((sum, opt) => sum + opt.price, 0);
       const totalPrice = (basePrice + optionsPrice) * item.quantity;
       
       this.content += `
         <tr>
           <td>
-            <strong>${item.vehicle.brand} ${item.vehicle.name}</strong><br>
-            <span style="font-size: 12px; color: #666;">${item.vehicle.model} (${item.vehicle.year})</span>
+            <strong>${item.vehicule.brand} ${item.vehicule.name}</strong><br>
+            <span style="font-size: 12px; color: #666;">${item.vehicule.model} (${item.vehicule.year})</span>
           </td>
           <td>
             ${item.selectedOptions.length > 0 
@@ -504,6 +504,8 @@ export class HTMLOrderBuilder implements DocumentBuilder {
   }
 }
 
+import html2pdf from 'html2pdf.js'; // New import
+
 // Director: Orchestrates the building process
 export class DocumentDirector {
   private builder!: DocumentBuilder;
@@ -524,7 +526,7 @@ export class DocumentDirector {
 }
 
 // Factory to create all documents for an order
-export const generateOrderDocuments = (order: Order, format: 'html' | 'pdf' = 'html'): OrderDocument[] => {
+export const generateOrderDocuments = async (order: Order, format: 'html' | 'pdf' = 'html'): Promise<OrderDocument[]> => {
   const director = new DocumentDirector();
   const documents: OrderDocument[] = [];
   
@@ -539,6 +541,25 @@ export const generateOrderDocuments = (order: Order, format: 'html' | 'pdf' = 'h
   // Order form
   director.setBuilder(new HTMLOrderBuilder());
   documents.push(director.buildDocument(order));
+
+  if (format === 'pdf') {
+    // For PDF, we'll generate the HTML content and then convert it
+    // For simplicity, let's just generate the Order Form HTML and convert it to PDF
+    const orderFormBuilder = new HTMLOrderBuilder();
+    director.setBuilder(orderFormBuilder);
+    const orderFormDocument = director.buildDocument(order);
+
+    const pdfOptions = {
+      margin: 10,
+      filename: `commande_${order.id}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    };
+
+    await html2pdf().from(orderFormDocument.content).set(pdfOptions).save();
+    return []; // Return empty array or handle PDF specific return
+  }
   
   return documents;
 };
