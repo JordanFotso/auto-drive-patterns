@@ -15,6 +15,7 @@ import Checkout from "./pages/Checkout"; // Page de checkout
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Orders from "./pages/Orders";
 import Promotions from "./pages/Promotions";
+import ProfileRouter from "./pages/ProfileRouter";
 import NotFound from "./pages/NotFound";
 
 const App = () => (
@@ -38,6 +39,15 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Checkout />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/mon-profil" 
+              element={
+                <ProtectedRoute>
+                  <ProfileRouter />
                 </ProtectedRoute>
               } 
             />

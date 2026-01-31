@@ -7,7 +7,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   registerCustomer: (email: string, password: string, firstName: string, lastName: string, phone: string, address: string, dob: string, bankAccountNumber: string) => Promise<boolean>;
-  registerCompanyUser: (email: string, password: string, societeId: string, contactPersonName: string, phone: string, address: string, companyRegistrationNumber: string, website: string, companyBankAccountNumber: string) => Promise<boolean>;
+  registerCompanyUser: (email: string, password: string, companyName: string, contactPersonName: string, phone: string, address: string, companyRegistrationNumber: string, website: string, companyBankAccountNumber: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
 }
@@ -98,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const registerCompanyUser = useCallback(async (email, password, societeId, contactPersonName, phone, address, companyRegistrationNumber, website, companyBankAccountNumber) => {
+  const registerCompanyUser = useCallback(async (email, password, companyName, contactPersonName, phone, address, companyRegistrationNumber, website, companyBankAccountNumber) => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/register/company`, {
@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, societeId, contactPersonName, phone, address, companyRegistrationNumber, website, companyBankAccountNumber }),
+        body: JSON.stringify({ email, password, companyName, contactPersonName, phone, address, companyRegistrationNumber, website, companyBankAccountNumber }),
       });
 
       if (!response.ok) {
@@ -126,17 +126,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  const [userProfile, setUserProfile] = useState<any | null>(null);
+
+  const getUserProfile = useCallback(async () => {
+    if (token) {
+      setLoading(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUserProfile(data);
+        } else {
+          console.error("Failed to fetch user profile");
+          // Optionally handle token expiration or other errors here
+        }
+      } catch (error) {
+        console.error('Network error fetching user profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }, [token]);
+
+  const isAuthenticated = !!token;
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      getUserProfile();
+    }
+  }, [isAuthenticated, getUserProfile]);
+  
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
+    setUserProfile(null);
     localStorage.removeItem(LOCAL_STORAGE_TOKEN_KEY);
     toast.info('Déconnecté.');
   }, []);
 
-  const isAuthenticated = !!token;
-
   return (
-    <AuthContext.Provider value={{ token, user, isAuthenticated, login, registerCustomer, registerCompanyUser, logout, loading }}>
+    <AuthContext.Provider value={{ token, user, userProfile, isAuthenticated, login, registerCustomer, registerCompanyUser, logout, getUserProfile, loading }}>
       {children}
     </AuthContext.Provider>
   );

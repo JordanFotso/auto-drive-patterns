@@ -25,7 +25,7 @@ const registerSchema = z.object({
   bankAccountNumber: z.string().optional(),
 
   // Company specific fields
-  societeId: z.string().optional(),
+  companyName: z.string().optional(),
   contactPersonName: z.string().optional(),
   companyRegistrationNumber: z.string().optional(),
   website: z.string().optional(),
@@ -77,11 +77,11 @@ const registerSchema = z.object({
     }
 
   } else if (data.userType === 'company') {
-    if (!data.societeId || data.societeId.trim() === '') {
+    if (!data.companyName || data.companyName.trim() === '') {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'L\'ID de la société est requis pour les entreprises.',
-        path: ['societeId'],
+        message: 'Le nom de l\'entreprise est requis.',
+        path: ['companyName'],
       });
     }
     if (!data.contactPersonName || data.contactPersonName.trim() === '') {
@@ -146,7 +146,7 @@ const Register = () => {
       address: '',
       dob: '',
       bankAccountNumber: '',
-      societeId: '',
+      companyName: '',
       contactPersonName: '',
       companyRegistrationNumber: '',
       website: '',
@@ -177,7 +177,7 @@ const Register = () => {
       success = await registerCompanyUser(
         values.email,
         values.password,
-        values.societeId || '',
+        values.companyName || '',
         values.contactPersonName || '',
         values.phone || '',
         values.address || '',
@@ -377,14 +377,14 @@ const Register = () => {
               <>
                 <FormField
                   control={form.control}
-                  name="societeId"
+                  name="companyName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>ID Société</FormLabel>
+                      <FormLabel>Nom de l'entreprise</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input type="text" placeholder="ID de votre société" className="pl-10" {...field} />
+                          <Input type="text" placeholder="Nom de votre entreprise" className="pl-10" {...field} />
                         </div>
                       </FormControl>
                       <FormMessage />
